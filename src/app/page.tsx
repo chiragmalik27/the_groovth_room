@@ -1,7 +1,6 @@
 import HeroShowcase from "@/components/home/HeroShowcase";
 import PillarsSection from "@/components/home/PillarsSection";
 import ServicesSection from "@/components/home/ServicesSection";
-import CollaborationSection from "@/components/home/CollaborationSection";
 import ApproachPreview from "@/components/home/ApproachPreview";
 import AudienceSection from "@/components/home/AudienceSection";
 import ReadingRoomPreview from "@/components/home/ReadingRoomPreview";
@@ -13,7 +12,6 @@ export default function HomePage() {
       <HeroShowcase />
       <PillarsSection />
       <ServicesSection />
-      <CollaborationSection />
       <ApproachPreview />
       <AudienceSection />
       <ReadingRoomPreview />
