@@ -10,7 +10,7 @@ export default function ReadingRoomPreview() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           {/* Left Column */}
           <div className="lg:col-span-6 space-y-4">
-            <SectionTag>04 / FROM THE READING ROOM</SectionTag>
+            <SectionTag>03 / FROM THE READING ROOM</SectionTag>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-charcoal leading-[1.15]">
               A little distance. <br />
               A useful perspective.

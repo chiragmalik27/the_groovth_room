@@ -11,7 +11,7 @@ export default function PillarsSection() {
         {/* Section Header */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start mb-16 md:mb-20">
           <div className="lg:col-span-7 space-y-4">
-            <SectionTag>02 / WHAT WE WORK ON</SectionTag>
+            <SectionTag>01 / WHAT WE WORK ON</SectionTag>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-charcoal leading-[1.15]">
               The right question changes the work.
             </h2>

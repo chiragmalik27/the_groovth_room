@@ -1,5 +1,4 @@
 import HeroShowcase from "@/components/home/HeroShowcase";
-import ReasonSection from "@/components/home/ReasonSection";
 import PillarsSection from "@/components/home/PillarsSection";
 import ServicesSection from "@/components/home/ServicesSection";
 import CollaborationSection from "@/components/home/CollaborationSection";
@@ -12,7 +11,6 @@ export default function HomePage() {
   return (
     <>
       <HeroShowcase />
-      <ReasonSection />
       <PillarsSection />
       <ServicesSection />
       <CollaborationSection />

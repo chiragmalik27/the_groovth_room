@@ -21,7 +21,7 @@ export default function CollaborationSection() {
 
           {/* Right Column: Narrative */}
           <div className="lg:col-span-7 order-1 lg:order-2 space-y-6">
-            <SectionTag>03 / HOW IT FEELS TO WORK TOGETHER</SectionTag>
+            <SectionTag>02 / HOW IT FEELS TO WORK TOGETHER</SectionTag>
 
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-charcoal leading-[1.15]">
               Close enough to ask better questions.
