@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Compass, Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -20,15 +20,12 @@ export default function Header() {
   return (
     <header className="fixed top-[12px] left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-300">
       <div className="pointer-events-auto max-w-[1040px] w-full rounded-[999px] bg-[rgba(8,28,22,0.75)] backdrop-blur-[14px] border border-white/[0.08] px-4 sm:px-6 py-2.5 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-6 shadow-[0_10px_35px_rgba(0,0,0,0.35)]">
-        {/* Left: Compass Logo & Spaced Uppercase Wordmark */}
+        {/* Left: Brand Wordmark */}
         <Link
           href="/"
-          className="group flex items-center gap-2.5 focus:outline-none shrink-0"
+          className="group flex items-center focus:outline-none shrink-0"
           aria-label="The Grovvth Room Home"
         >
-          <span className="w-7 h-7 rounded-full bg-[#0c2a21] border border-white/10 flex items-center justify-center text-[#c5a66a] group-hover:border-[#c5a66a]/40 transition-colors">
-            <Compass className="w-4 h-4 text-[#c5a66a]" />
-          </span>
           <span className="font-sans font-semibold tracking-[0.18em] text-xs sm:text-[13px] text-[#f4f1ea] uppercase group-hover:text-white transition-colors">
             The Grovvth Room
           </span>
