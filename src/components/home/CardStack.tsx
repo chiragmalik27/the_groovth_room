@@ -196,19 +196,23 @@ const CARD_THEMES = [
 export default function CardStack({ services }: CardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1280);
   const total = services.length;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Responsive screen check
+  // Responsive screen measurement for 100% full-width coverflow
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const isMobile = windowWidth < 640;
+  const isTablet = windowWidth >= 640 && windowWidth < 1024;
+  const isDesktop = windowWidth >= 1024;
 
   // Handlers for next / prev
   const handleNext = useCallback(() => {
@@ -254,11 +258,11 @@ export default function CardStack({ services }: CardStackProps) {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* 3D Stack Stage Container */}
+      {/* 3D Stack Stage Container spanning 100% width */}
       <div
-        className="relative w-full h-[460px] sm:h-[480px] md:h-[520px] flex items-center justify-center overflow-hidden"
+        className="relative w-full h-[480px] sm:h-[530px] md:h-[590px] lg:h-[630px] flex items-center justify-center overflow-hidden"
         style={{
-          perspective: isMobile ? "900px" : "1300px",
+          perspective: isMobile ? "900px" : "1400px",
         }}
       >
         {services.map((service, index) => {
@@ -268,11 +272,11 @@ export default function CardStack({ services }: CardStackProps) {
           if (offset < -total / 2) offset += total;
 
           const isActive = offset === 0;
-          const isVisible = Math.abs(offset) <= 2;
+          const isVisible = Math.abs(offset) <= (isMobile ? 2 : 3);
 
           const theme = CARD_THEMES[index % CARD_THEMES.length];
 
-          // 3D Layout calculations matching 21st.dev reference
+          // 100% Full-Width 3D Layout calculations matching 21st.dev reference
           let x = 0;
           let y = 0;
           let rotateZ = 0;
@@ -291,47 +295,65 @@ export default function CardStack({ services }: CardStackProps) {
             opacity = 1;
           } else if (offset === -1) {
             // Immediate Left Card: Tilted counter-clockwise, scaled down
-            x = isMobile ? -130 : -280;
-            y = isMobile ? 12 : 18;
-            rotateZ = isMobile ? -8 : -13;
+            x = isMobile ? -140 : isTablet ? -300 : isDesktop ? -420 : -480;
+            y = isMobile ? 12 : 20;
+            rotateZ = isMobile ? -8 : -12;
             rotateY = isMobile ? 10 : 16;
-            scale = isMobile ? 0.88 : 0.86;
+            scale = isMobile ? 0.88 : 0.88;
             zIndex = 30;
-            opacity = 0.82;
+            opacity = 0.85;
           } else if (offset === 1) {
             // Immediate Right Card: Tilted clockwise, scaled down
-            x = isMobile ? 130 : 280;
-            y = isMobile ? 12 : 18;
-            rotateZ = isMobile ? 8 : 13;
+            x = isMobile ? 140 : isTablet ? 300 : isDesktop ? 420 : 480;
+            y = isMobile ? 12 : 20;
+            rotateZ = isMobile ? 8 : 12;
             rotateY = isMobile ? -10 : -16;
-            scale = isMobile ? 0.88 : 0.86;
+            scale = isMobile ? 0.88 : 0.88;
             zIndex = 30;
-            opacity = 0.82;
+            opacity = 0.85;
           } else if (offset === -2) {
             // Outer Left Card: Further back and rotated
-            x = isMobile ? -210 : -500;
-            y = isMobile ? 24 : 38;
-            rotateZ = isMobile ? -14 : -24;
-            rotateY = isMobile ? 16 : 26;
-            scale = isMobile ? 0.76 : 0.73;
+            x = isMobile ? -230 : isTablet ? -540 : isDesktop ? -760 : -900;
+            y = isMobile ? 24 : 42;
+            rotateZ = isMobile ? -14 : -22;
+            rotateY = isMobile ? 16 : 28;
+            scale = isMobile ? 0.76 : 0.75;
             zIndex = 20;
-            opacity = 0.48;
+            opacity = 0.55;
           } else if (offset === 2) {
             // Outer Right Card: Further back and rotated
-            x = isMobile ? 210 : 500;
-            y = isMobile ? 24 : 38;
-            rotateZ = isMobile ? 14 : 24;
-            rotateY = isMobile ? -16 : -26;
-            scale = isMobile ? 0.76 : 0.73;
+            x = isMobile ? 230 : isTablet ? 540 : isDesktop ? 760 : 900;
+            y = isMobile ? 24 : 42;
+            rotateZ = isMobile ? 14 : 22;
+            rotateY = isMobile ? -16 : -28;
+            scale = isMobile ? 0.76 : 0.75;
             zIndex = 20;
-            opacity = 0.48;
+            opacity = 0.55;
+          } else if (offset === -3) {
+            // Far Left Card peeking at the screen edge
+            x = isMobile ? -300 : isTablet ? -720 : isDesktop ? -1050 : -1240;
+            y = 54;
+            rotateZ = -26;
+            rotateY = 34;
+            scale = 0.65;
+            zIndex = 10;
+            opacity = isMobile ? 0 : isTablet ? 0.2 : 0.35;
+          } else if (offset === 3) {
+            // Far Right Card peeking at the screen edge
+            x = isMobile ? 300 : isTablet ? 720 : isDesktop ? 1050 : 1240;
+            y = 54;
+            rotateZ = 26;
+            rotateY = -34;
+            scale = 0.65;
+            zIndex = 10;
+            opacity = isMobile ? 0 : isTablet ? 0.2 : 0.35;
           } else {
             // Far hidden cards
-            x = offset > 0 ? 600 : -600;
-            y = 50;
+            x = offset > 0 ? 1300 : -1300;
+            y = 60;
             rotateZ = offset > 0 ? 30 : -30;
-            scale = 0.6;
-            zIndex = 10;
+            scale = 0.55;
+            zIndex = 5;
             opacity = 0;
           }
 
@@ -368,7 +390,7 @@ export default function CardStack({ services }: CardStackProps) {
                 transformStyle: "preserve-3d",
                 willChange: "transform, opacity",
               }}
-              className={`absolute top-auto w-[290px] sm:w-[420px] md:w-[480px] lg:w-[520px] h-[370px] sm:h-[400px] md:h-[430px] rounded-[24px] overflow-hidden cursor-pointer ${
+              className={`absolute top-auto w-[290px] sm:w-[440px] md:w-[500px] lg:w-[560px] xl:w-[600px] h-[380px] sm:h-[420px] md:h-[450px] lg:h-[470px] rounded-[24px] overflow-hidden cursor-pointer ${
                 isActive ? "cursor-grab active:cursor-grabbing" : ""
               }`}
             >
@@ -457,12 +479,16 @@ export default function CardStack({ services }: CardStackProps) {
           );
         })}
 
+        {/* Soft edge canvas masks that gently dissolve the outer cards as they approach the screen edges */}
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 md:w-28 lg:w-36 bg-gradient-to-r from-canvas via-canvas/50 to-transparent z-40" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 md:w-28 lg:w-36 bg-gradient-to-l from-canvas via-canvas/50 to-transparent z-40" />
+
         {/* Floating Left Chevron Button */}
         <button
           type="button"
           onClick={handlePrev}
           aria-label="Previous service card"
-          className="absolute left-2 sm:left-4 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#081d17]/80 hover:bg-[#0c2a21] border border-white/20 backdrop-blur-md flex items-center justify-center text-[#f4f1ea] hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
+          className="absolute left-3 sm:left-6 md:left-10 lg:left-14 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#081d17]/85 hover:bg-[#0c2a21] border border-white/20 backdrop-blur-md flex items-center justify-center text-[#f4f1ea] hover:text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
         >
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -472,7 +498,7 @@ export default function CardStack({ services }: CardStackProps) {
           type="button"
           onClick={handleNext}
           aria-label="Next service card"
-          className="absolute right-2 sm:right-4 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#081d17]/80 hover:bg-[#0c2a21] border border-white/20 backdrop-blur-md flex items-center justify-center text-[#f4f1ea] hover:text-white shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
+          className="absolute right-3 sm:right-6 md:right-10 lg:right-14 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#081d17]/85 hover:bg-[#0c2a21] border border-white/20 backdrop-blur-md flex items-center justify-center text-[#f4f1ea] hover:text-white shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none"
         >
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
