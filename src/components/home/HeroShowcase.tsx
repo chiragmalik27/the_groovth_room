@@ -1,117 +1,42 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { Plane } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { AnimatePresence, motion } from "framer-motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
 
-interface TabItem {
-  id: string;
-  label: string;
-  badge: string;
-  eyebrow: string;
-  headline: string;
-  description: string;
-  image: string;
-  status: string;
-  ctaText: string;
-  ctaHref: string;
-}
-
-const TABS: TabItem[] = [
-  {
-    id: "room",
-    label: "The Room",
-    badge: "FOUNDER-LED CONSULTANCY",
-    eyebrow: "THE GROVVTH ROOM • HEADQUARTERS",
-    headline: "WHERE BUSINESS STRATEGY MEETS EXECUTION",
-    description:
-      "A collaborative room where founders bring the context, and we bring clarity, structure, and execution velocity.",
-    image: "/images/grovvth_room_meeting.jpg",
-    status: "In Session • Founder Consultations Active",
-    ctaText: "Start a Conversation",
-    ctaHref: "/contact",
-  },
-  {
-    id: "strategy",
-    label: "Strategy",
-    badge: "PILLAR 01 • POSITION & PLAN",
-    eyebrow: "BUSINESS STRATEGY & GROWTH PLANNING",
-    headline: "CLEAR BUSINESS MODELS & REVENUE ENGINES",
-    description:
-      "Strategic business planning covering revenue engines, competitor benchmarking, pricing power, and scalable motions.",
-    image: "/images/grovvth_room_meeting.jpg",
-    status: "Active Workstream • Strategic Advisory",
-    ctaText: "Explore Strategy",
-    ctaHref: "/services/business-strategy-growth-planning",
-  },
-  {
-    id: "enablement",
-    label: "Enablement",
-    badge: "PILLAR 02 • BRAND & MARKET",
-    eyebrow: "FMCG BRAND & MARKET READINESS",
-    headline: "FMCG POSITIONING & RETAIL READINESS",
-    description:
-      "Price-pack strategy, Modern & General Trade channel mapping, and packaging coordination before full market launch.",
-    image: "/images/grovvth_room_meeting.jpg",
-    status: "Market Enablement • Retail Mapping",
-    ctaText: "Explore FMCG",
-    ctaHref: "/services/fmcg-brand-market-enablement",
-  },
-  {
-    id: "distribution",
-    label: "Distribution",
-    badge: "PILLAR 03 • MARKET REACH",
-    eyebrow: "DISTRIBUTION & CHANNEL MANAGEMENT",
-    headline: "DISTRIBUTOR NETWORKS & CHANNEL ECONOMICS",
-    description:
-      "Distributor mapping, reseller outreach, partner onboarding workflows, and margin assessment that scale sustainably.",
-    image: "/images/grovvth_room_meeting.jpg",
-    status: "Network Expansion • Channel Velocity",
-    ctaText: "Explore Distribution",
-    ctaHref: "/services/distribution-channel-development",
-  },
-  {
-    id: "advisory",
-    label: "Advisory",
-    badge: "ONE-ON-ONE • FOUNDER CLARITY",
-    eyebrow: "EXECUTIVE SOUNDING BOARD",
-    headline: "AN OBJECTIVE SOUNDING BOARD FOR FOUNDERS",
-    description:
-      "Confidential advisory sessions to challenge biases, evaluate pitch feedback, and maintain decisive momentum.",
-    image: "/images/grovvth_room_meeting.jpg",
-    status: "1-on-1 Sessions • Executive Clarity",
-    ctaText: "Book Advisory",
-    ctaHref: "/services/one-on-one-founder-assistance",
-  },
-];
-
 export default function HeroShowcase() {
-  const [activeTabId, setActiveTabId] = useState<string>("room");
-  const activeTab = TABS.find((t) => t.id === activeTabId) || TABS[0];
-
   // DOM Refs for GSAP animation
   const runwayRef = useRef<HTMLDivElement>(null);
-  const heroContentRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const cabinWallRef = useRef<HTMLDivElement>(null);
   const windowFrameRef = useRef<HTMLDivElement>(null);
-  const windowImageRef = useRef<HTMLDivElement>(null);
-  const roomContentRef = useRef<HTMLDivElement>(null);
-  const tabsRailRef = useRef<HTMLDivElement>(null);
+  const skyImageRef = useRef<HTMLDivElement>(null);
+  const brandTextRef = useRef<HTMLDivElement>(null);
 
-  // GSAP ScrollTrigger "Window / Portal" Zoom Animation
+  // Text & Overlay Refs
+  const navRef = useRef<HTMLElement>(null);
+  const headingLeftRef = useRef<HTMLDivElement>(null);
+  const headingRightRef = useRef<HTMLDivElement>(null);
+  const bottomLeftRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const revealRef = useRef<HTMLDivElement>(null);
+
+  // GSAP ScrollTrigger "Fly-Through Window" Timeline
   useGSAP(
     () => {
       if (!runwayRef.current || !windowFrameRef.current) return;
 
       const isMobile = window.innerWidth < 768;
+      const targetScale = isMobile ? 26 : 22;
 
       // Master Timeline scrubbed to user scroll
       const tl = gsap.timeline({
@@ -119,98 +44,93 @@ export default function HeroShowcase() {
           trigger: runwayRef.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: 1.2, // Silky smooth GSAP scrub
+          scrub: 1.1, // Smooth GSAP scrub
         },
       });
 
-      // 1. Hero text floats up and gently dissolves
+      // 1. Text elements and navigation smoothly fade out and drift upward
       tl.to(
-        heroContentRef.current,
+        [
+          navRef.current,
+          headingLeftRef.current,
+          headingRightRef.current,
+          bottomLeftRef.current,
+          ctaRef.current,
+          scrollIndicatorRef.current,
+        ],
         {
           opacity: 0,
-          y: -70,
-          scale: 0.95,
-          duration: 0.32,
+          y: -35,
+          stagger: 0.02,
+          duration: 0.28,
           ease: "power2.inOut",
         },
         0
       );
 
-      // 2. The Window expands from an inset framed card into 100% full screen
-      tl.fromTo(
+      // 2. Brand text inside the window scales slightly and dissolves
+      tl.to(
+        brandTextRef.current,
+        {
+          opacity: 0,
+          scale: 1.4,
+          duration: 0.24,
+          ease: "power1.inOut",
+        },
+        0.04
+      );
+
+      // 3. Cabin interior background dissolves
+      tl.to(
+        cabinWallRef.current,
+        {
+          opacity: 0,
+          duration: 0.5,
+          ease: "power2.inOut",
+        },
+        0.14
+      );
+
+      // 4. Centerpiece Airplane Window Frame zooms in dramatically (Fly-through effect)
+      tl.to(
         windowFrameRef.current,
         {
-          width: isMobile ? "92vw" : "84vw",
-          maxWidth: isMobile ? "92vw" : "1152px",
-          height: isMobile ? "46vh" : "54vh",
-          borderRadius: isMobile ? "22px" : "32px",
-          borderWidth: isMobile ? "3px" : "5px",
-          borderColor: "rgba(255, 255, 255, 0.45)",
-          y: isMobile ? 18 : 28,
-          scale: 1,
-        },
-        {
-          width: "100vw",
-          maxWidth: "100vw",
-          height: "100vh",
-          borderRadius: "0px",
-          borderWidth: "0px",
-          borderColor: "rgba(255, 255, 255, 0)",
-          y: 0,
-          scale: 1,
-          duration: 0.72,
+          scale: targetScale,
+          transformOrigin: "center center",
+          duration: 0.8,
           ease: "power2.inOut",
         },
         0.08
       );
 
-      // 3. Counter-scale the image inside to create authentic 3D optical depth
+      // 5. Parallax sky image counter-motion for 3D optical depth
       tl.fromTo(
-        windowImageRef.current,
+        skyImageRef.current,
         {
-          scale: 1.18,
+          scale: 1.22,
           y: "-3%",
         },
         {
           scale: 1.0,
           y: "0%",
-          duration: 0.72,
+          duration: 0.8,
           ease: "power1.out",
         },
         0.08
       );
 
-      // 4. Reveal the full room details & tabs as you pass through the glass
+      // 6. Seamless transition: sky dissolves into the canvas background of the next section
       tl.fromTo(
-        roomContentRef.current,
-        {
-          opacity: 0.2,
-          y: 35,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.35,
-          ease: "power2.out",
-        },
-        0.5
-      );
-
-      tl.fromTo(
-        tabsRailRef.current,
+        revealRef.current,
         {
           opacity: 0,
-          x: isMobile ? 0 : 45,
-          y: isMobile ? 30 : 0,
         },
         {
           opacity: 1,
-          x: 0,
-          y: 0,
-          duration: 0.35,
+          duration: 0.28,
           ease: "power2.out",
         },
-        0.55
+        0.72
       );
     },
     { scope: runwayRef }
@@ -219,197 +139,253 @@ export default function HeroShowcase() {
   return (
     <div
       ref={runwayRef}
-      className="relative w-full h-[260vh] sm:h-[280vh]"
-      style={{
-        background: `
-          linear-gradient(180deg, 
-            #020817 0%, 
-            #06163a 20%, 
-            #0b2b6b 42%, 
-            #1d4ed8 65%, 
-            #60a5fa 82%, 
-            #bfdbfe 92%, 
-            #f4f1ea 100%
-          )
-        `,
-      }}
+      className="relative w-full h-[280vh] sm:h-[300vh] bg-[#14100e]"
     >
-      {/* Sticky viewport pins the camera scene */}
-      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between pt-24 pb-6 sm:py-10 px-4 sm:px-6 overflow-hidden">
-        
-        {/* 1. HERO CONTENT: Floats up and fades out as you zoom into the window */}
+      {/* Sticky Fullscreen Stage pinned during zoom flythrough */}
+      <div
+        ref={stageRef}
+        className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden"
+      >
+        {/* 1. DARK MOODY CABIN INTERIOR BACKGROUND */}
         <div
-          ref={heroContentRef}
-          className="relative z-20 flex flex-col items-center text-center max-w-4xl px-4 mt-2 sm:mt-6 select-none"
+          ref={cabinWallRef}
+          className="absolute inset-0 z-0 pointer-events-none select-none transition-opacity duration-300"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 50%, #2f2722 0%, #211a16 38%, #14100e 75%, #0c0a08 100%)",
+          }}
         >
-          {/* Eyebrow / Announcement Pill */}
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#071c42]/85 border border-blue-400/25 backdrop-blur-md mb-4 sm:mb-6 shadow-[0_4px_20px_rgba(2,8,23,0.35)]">
-            <span className="font-sans text-xs sm:text-[13px] font-medium tracking-wide text-[#f4f1ea]">
-              Your Partner in Building and Growing Businesses
-            </span>
-          </div>
+          {/* Subtle warm halo glow centered behind the window */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(240,215,190,0.14)_0%,transparent_58%)]" />
 
-          {/* Large Serif Headline */}
-          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.08] sm:leading-[1.04] tracking-tightest text-[#f4f1ea] font-normal drop-shadow-md mb-4 sm:mb-5">
-            Build Stronger Foundations. <br className="hidden sm:inline" />
-            <span className="italic font-light text-blue-200">Create Room</span>{" "}
-            to Grow.
-          </h1>
-
-          {/* Supporting Paragraph */}
-          <p className="font-sans text-xs sm:text-base md:text-lg text-[#f4f1ea]/85 max-w-2xl mx-auto leading-relaxed font-normal mb-5 sm:mb-6 line-clamp-2 sm:line-clamp-none text-balance">
-            The Grovvth Room brings business strategy, marketing, market
-            enablement and digital capabilities together to help businesses build,
-            navigate and grow with clarity.
-          </p>
-
-          {/* Two CTAs */}
-          <div className="flex flex-row items-center justify-center gap-3 sm:gap-5 w-auto">
-            {/* Primary CTA: Cream "Explore Our Services" Button */}
-            <Link
-              href="/services"
-              className="group inline-flex items-center justify-center gap-2 bg-[#f4f1ea] text-[#020817] px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide hover:bg-white hover:shadow-[0_8px_30px_rgba(244,241,234,0.3)] transition-all duration-200"
-            >
-              <span>Explore Our Services</span>
-              <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-
-            {/* Secondary CTA: Royal Blue "Let's Discuss Your Business" Button */}
-            <Link
-              href="/contact"
-              className="group inline-flex items-center justify-center gap-2 bg-[#1d4ed8]/70 hover:bg-[#1d4ed8] border border-blue-400/30 text-[#f4f1ea] px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full text-xs sm:text-sm font-medium tracking-wide backdrop-blur-sm transition-all duration-200"
-            >
-              <span>Let&apos;s Discuss</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
-          </div>
+          {/* Vignette border */}
+          <div className="absolute inset-0 shadow-[inset_0_0_120px_rgba(0,0,0,0.85)]" />
         </div>
 
-        {/* 2. THE WINDOW FRAME: Scales up from inset card to 100% full-screen */}
+        {/* 2. TOP MINIMAL NAVIGATION BAR */}
+        <header
+          ref={navRef}
+          className="absolute top-0 left-0 right-0 z-30 px-6 sm:px-12 lg:px-16 py-6 sm:py-8 flex items-center justify-between text-[#e6e2dd]/85 pointer-events-auto select-none"
+        >
+          {/* Left Navigation Links */}
+          <nav
+            className="flex items-center gap-5 sm:gap-9 md:gap-12 text-xs sm:text-[13px] font-sans tracking-[0.08em] font-normal"
+            aria-label="Hero Navigation"
+          >
+            <Link
+              href="/about"
+              className="hover:text-white transition-colors duration-150"
+            >
+              About
+            </Link>
+            <Link
+              href="/services"
+              className="hover:text-white transition-colors duration-150"
+            >
+              Our Fleet
+            </Link>
+            <Link
+              href="/approach"
+              className="hover:text-white transition-colors duration-150"
+            >
+              Advantages
+            </Link>
+            <Link
+              href="/services"
+              className="hover:text-white transition-colors duration-150"
+            >
+              Global
+            </Link>
+          </nav>
+
+          {/* Right Contact Details */}
+          <div className="hidden sm:flex items-center gap-6 sm:gap-8 text-xs sm:text-[13px] font-sans tracking-wide">
+            <a
+              href="tel:+971544325050"
+              className="hover:text-white transition-colors duration-150"
+            >
+              +971 54 432 5050
+            </a>
+            <a
+              href="mailto:info@jeskojets.com"
+              className="hover:text-white transition-colors duration-150"
+            >
+              info@jeskojets.com
+            </a>
+          </div>
+        </header>
+
+        {/* 3. DISPLAY HEADINGS (OVERLAPPING WINDOW SIDES) */}
+        {/* Left Heading: "We are movement" */}
+        <div
+          ref={headingLeftRef}
+          className="absolute left-5 sm:left-10 lg:left-16 xl:left-24 top-[32%] sm:top-[30%] -translate-y-1/2 z-20 pointer-events-none select-none max-w-[280px] xs:max-w-[340px] sm:max-w-md lg:max-w-xl"
+        >
+          <h1 className="font-sans font-black text-4xl xs:text-5xl sm:text-7xl lg:text-[88px] xl:text-[96px] leading-[0.88] tracking-[-0.04em] text-white drop-shadow-[0_8px_32px_rgba(0,0,0,0.7)] uppercase">
+            We are
+            <br />
+            movement
+          </h1>
+        </div>
+
+        {/* Right Heading: "We are distinction" */}
+        <div
+          ref={headingRightRef}
+          className="absolute right-5 sm:right-10 lg:right-16 xl:right-24 top-[66%] sm:top-[68%] -translate-y-1/2 z-20 text-right pointer-events-none select-none max-w-[280px] xs:max-w-[340px] sm:max-w-md lg:max-w-xl"
+        >
+          <h2 className="font-sans font-black text-4xl xs:text-5xl sm:text-7xl lg:text-[88px] xl:text-[96px] leading-[0.88] tracking-[-0.04em] text-white drop-shadow-[0_8px_32px_rgba(0,0,0,0.7)] uppercase">
+            We are
+            <br />
+            distinction
+          </h2>
+        </div>
+
+        {/* 4. CENTERPIECE: REALISTIC AIRPLANE CABIN WINDOW */}
         <div
           ref={windowFrameRef}
-          className="relative overflow-hidden bg-[#030b1e] shadow-[0_30px_90px_rgba(2,8,23,0.85)] z-10 flex flex-col justify-end"
+          className="relative z-10 flex items-center justify-center select-none"
           style={{
-            willChange: "width, height, transform, border-radius",
+            willChange: "transform",
             transformOrigin: "center center",
           }}
         >
-          {/* View through the window: Photographic Image with Royal Blue Lighting Overlay */}
-          <div ref={windowImageRef} className="absolute inset-0 z-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: "easeInOut" }}
-                className="absolute inset-0"
+          {/* Outer Bezel (Warm Metallic Polymer Frame) */}
+          <div
+            className="relative w-[280px] xs:w-[320px] sm:w-[380px] md:w-[420px] lg:w-[460px] h-[430px] xs:h-[490px] sm:h-[580px] md:h-[640px] lg:h-[700px] rounded-[140px] xs:rounded-[160px] sm:rounded-[190px] md:rounded-[210px] lg:rounded-[230px] p-[16px] xs:p-[20px] sm:p-[24px] md:p-[28px] flex items-center justify-center"
+            style={{
+              background:
+                "linear-gradient(145deg, #e7e3dc 0%, #d8d3c9 22%, #aca69c 55%, #dfdad2 82%, #cfc9be 100%)",
+              boxShadow: `
+                0 35px 95px rgba(0, 0, 0, 0.9),
+                0 15px 40px rgba(0, 0, 0, 0.65),
+                inset 0 3px 6px rgba(255, 255, 255, 0.9),
+                inset 0 -6px 14px rgba(0, 0, 0, 0.45)
+              `,
+            }}
+          >
+            {/* Middle Frame (Recessed Inner Bevel Ring) */}
+            <div
+              className="relative w-full h-full rounded-[120px] xs:rounded-[140px] sm:rounded-[166px] md:rounded-[182px] lg:rounded-[202px] p-[10px] xs:p-[13px] sm:p-[16px] md:p-[18px] flex items-center justify-center overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(180deg, #78736b 0%, #b5b0a6 32%, #958f84 68%, #4e4a43 100%)",
+                boxShadow: `
+                  inset 0 12px 24px rgba(0, 0, 0, 0.7),
+                  inset 0 -8px 16px rgba(255, 255, 255, 0.4),
+                  0 2px 6px rgba(0, 0, 0, 0.35)
+                `,
+              }}
+            >
+              {/* Airplane Window Shade Pull Tab (at Top of Middle Frame) */}
+              <div className="absolute top-1 sm:top-2 left-1/2 -translate-x-1/2 z-20 w-24 sm:w-32 md:w-36 h-5 sm:h-6 md:h-7 rounded-b-2xl bg-gradient-to-b from-[#24201d] via-[#38332c] to-[#1c1815] shadow-[inset_0_2px_4px_rgba(0,0,0,0.85),0_4px_10px_rgba(0,0,0,0.6)] border-t border-black/60 flex items-center justify-center">
+                {/* Grip recess slot */}
+                <div className="w-10 sm:w-14 h-1 sm:h-1.5 rounded-full bg-[#120f0d] shadow-inner opacity-75" />
+              </div>
+
+              {/* Inner Glass Pane / Aperture */}
+              <div
+                className="relative overflow-hidden w-full h-full rounded-[100px] xs:rounded-[120px] sm:rounded-[144px] md:rounded-[160px] lg:rounded-[180px]"
+                style={{
+                  boxShadow: `
+                    inset 0 0 45px rgba(0, 0, 0, 0.45),
+                    inset 0 4px 14px rgba(0, 0, 0, 0.6)
+                  `,
+                }}
               >
-                <Image
-                  src={activeTab.image}
-                  alt={activeTab.headline}
-                  fill
-                  priority
-                  className="object-cover object-center scale-[1.02]"
+                {/* High Altitude Sky Image with Clouds */}
+                <div ref={skyImageRef} className="absolute inset-0 z-0">
+                  <Image
+                    src="/images/airplane_sky.jpg"
+                    alt="Bright azure blue sky with soft clouds"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    className="object-cover object-center scale-105"
+                  />
+                </div>
+
+                {/* Glass Optical Specular Reflection Highlights */}
+                <div
+                  className="absolute inset-0 pointer-events-none z-10"
+                  style={{
+                    background:
+                      "linear-gradient(115deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.08) 26%, transparent 52%, rgba(255,255,255,0.06) 78%, rgba(255,255,255,0.18) 100%)",
+                  }}
                 />
-                {/* Royal Blue Multi-layer Atmosphere Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#051329]/75 to-[#08204d]/40" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#020817]/85 via-[#051329]/45 to-transparent" />
-              </motion.div>
-            </AnimatePresence>
-          </div>
 
-          {/* Window Glass Highlight Sheen */}
-          <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-b from-white/[0.08] via-transparent to-transparent" />
+                {/* Subtle Inner Glass Refraction Rim */}
+                <div className="absolute inset-0 pointer-events-none z-10 border border-white/20 rounded-[inherit]" />
 
-          {/* 3. INSIDE THE ROOM: Interactive Consultation Workspace & Tabs */}
-          <div className="relative z-20 w-full h-full grid grid-cols-1 md:grid-cols-12 min-h-full">
-            {/* Left 9 Columns: Room Active Content */}
-            <div
-              ref={roomContentRef}
-              className="md:col-span-9 flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[300px] md:min-h-full"
-            >
-              {/* Top Row: Left Mono Label & Right Pill */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#f4f1ea]">
-                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <span>THE GROVVTH ROOM</span>
-                </div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-blue-200 bg-[#0c2656]/90 border border-blue-400/25 px-3.5 py-1 rounded-full backdrop-blur-md">
-                  {activeTab.badge}
-                </span>
-              </div>
-
-              {/* Center Content: Eyebrow + Headline */}
-              <div className="my-auto py-4 sm:py-6">
-                <div className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-[#c5a66a] mb-2 font-medium">
-                  {activeTab.eyebrow}
-                </div>
-                <h2 className="font-serif text-xl sm:text-3xl lg:text-5xl font-normal tracking-tight text-[#f4f1ea] uppercase leading-[1.1] max-w-2xl drop-shadow-md">
-                  {activeTab.headline}
-                </h2>
-              </div>
-
-              {/* Bottom Row: Status Dot, Description, and CTA Button */}
-              <div className="pt-4 sm:pt-6 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-5">
-                <div className="space-y-1.5 max-w-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
-                    </span>
-                    <span className="text-xs font-mono font-medium text-blue-300 tracking-wide">
-                      {activeTab.status}
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-[#f4f1ea]/85 leading-relaxed font-sans font-light">
-                    {activeTab.description}
-                  </p>
-                </div>
-
-                <Link
-                  href={activeTab.ctaHref}
-                  className="group shrink-0 inline-flex items-center gap-2 bg-[#93c5fd] hover:bg-white text-[#020817] font-semibold text-xs sm:text-sm px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                {/* Centered Brand Text inside Sky */}
+                <div
+                  ref={brandTextRef}
+                  className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none select-none px-4"
                 >
-                  <span>{activeTab.ctaText}</span>
-                  <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </Link>
+                  <span className="font-sans font-medium text-sm xs:text-base sm:text-lg md:text-xl text-white/95 tracking-[0.28em] sm:tracking-[0.38em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)] uppercase">
+                    Jesko Jets
+                  </span>
+                </div>
               </div>
-            </div>
-
-            {/* Right 3 Columns: 5 Equal-Height Workstream Tabs */}
-            <div
-              ref={tabsRailRef}
-              className="md:col-span-3 flex flex-row md:flex-col divide-x md:divide-x-0 md:divide-y divide-white/10 bg-[#06183a]/95 border-t md:border-t-0 md:border-l border-white/15 overflow-x-auto md:overflow-visible backdrop-blur-md"
-            >
-              {TABS.map((tab) => {
-                const isActive = tab.id === activeTabId;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTabId(tab.id)}
-                    className={`flex-1 min-w-[120px] md:min-w-0 flex items-center justify-between px-4 sm:px-6 py-3.5 lg:py-5 text-left transition-all duration-200 focus:outline-none ${
-                      isActive
-                        ? "bg-[#bfdbfe] text-[#020817] font-semibold shadow-inner"
-                        : "bg-transparent text-[#f4f1ea]/75 hover:text-white hover:bg-[#0c2b64]"
-                    }`}
-                  >
-                    <span className="text-xs sm:text-sm lg:text-base tracking-wide font-sans">
-                      {tab.label}
-                    </span>
-                    <span
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        isActive ? "bg-[#020817]" : "bg-blue-300/30"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
             </div>
           </div>
         </div>
 
+        {/* 5. BOTTOM BAR / FOOTER OVERLAYS */}
+        {/* Bottom-Left: "Your freedom to enjoy life" */}
+        <div
+          ref={bottomLeftRef}
+          className="absolute left-5 sm:left-10 lg:left-16 xl:left-24 bottom-6 sm:bottom-10 z-20 max-w-[260px] xs:max-w-[300px] sm:max-w-[340px] pointer-events-none select-none"
+        >
+          <h3 className="font-sans font-bold text-xs sm:text-sm text-white tracking-wide mb-1.5">
+            Your freedom to enjoy life
+          </h3>
+          <div className="w-8 sm:w-10 h-[1px] bg-white/40 my-2.5" />
+          <p className="font-sans text-[11px] sm:text-xs leading-relaxed text-[#d4cec5]/80">
+            Every flight is designed around your comfort, time, and ambitions —
+            so you can focus on what truly matters, while we take care of
+            everything else.
+          </p>
+        </div>
+
+        {/* Bottom-Center: Pill CTA Button ("Book the Flight") */}
+        <div
+          ref={ctaRef}
+          className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-30 pointer-events-auto"
+        >
+          <Link
+            href="/contact"
+            className="group flex items-center gap-2.5 sm:gap-3 bg-white text-[#15110f] pl-5 sm:pl-6 pr-2 py-1.5 sm:py-2 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.65)] hover:bg-[#f6f2eb] hover:shadow-[0_16px_50px_rgba(0,0,0,0.85)] active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <span className="font-sans font-bold text-xs sm:text-sm tracking-wide">
+              Book the Flight
+            </span>
+            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#15110f] text-white flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+              <Plane className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current rotate-45" />
+            </span>
+          </Link>
+        </div>
+
+        {/* Bottom-Right: Subtle Scroll Indicator */}
+        <div
+          ref={scrollIndicatorRef}
+          className="absolute right-5 sm:right-10 lg:right-16 xl:right-24 bottom-6 sm:bottom-10 z-20 flex flex-col items-end pointer-events-none select-none max-w-[260px] sm:max-w-none"
+        >
+          <div className="w-36 sm:w-56 lg:w-64 h-[1px] bg-white/30 mb-2" />
+          <div className="w-full flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-mono tracking-[0.18em] sm:tracking-[0.24em] text-white/70 uppercase">
+            <span>SCROLL DOWN</span>
+            <span>TO START THE JOURNEY</span>
+          </div>
+        </div>
+
+        {/* 6. SEAMLESS REVEAL TRANSITION TO NEXT SECTION */}
+        <div
+          ref={revealRef}
+          className="absolute inset-0 z-40 pointer-events-none opacity-0 flex flex-col justify-end"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(243,240,232,0) 0%, rgba(243,240,232,0.8) 70%, #f3f0e8 100%)",
+          }}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Menu, X } from "lucide-react";
@@ -16,10 +16,33 @@ const NAV_LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      setScrolledPastHero(true);
+      return;
+    }
+    const handleScroll = () => {
+      // Show global header after scrolling past initial hero view (~window.innerHeight * 0.7)
+      setScrolledPastHero(window.scrollY > window.innerHeight * 0.7);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [pathname]);
+
+  const isVisible = pathname !== "/" || scrolledPastHero;
 
   return (
-    <header className="fixed top-[12px] left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-300">
-      <div className="pointer-events-auto max-w-[1040px] w-full rounded-[999px] bg-[rgba(5,19,41,0.8)] backdrop-blur-[16px] border border-white/[0.12] px-4 sm:px-6 py-2.5 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-6 shadow-[0_10px_35px_rgba(2,8,23,0.45)]">
+    <header
+      className={`fixed top-[12px] left-0 right-0 z-50 flex justify-center px-4 pointer-events-none transition-all duration-500 ${
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 -translate-y-5 pointer-events-none"
+      }`}
+    >
+      <div className="pointer-events-auto max-w-[1040px] w-full rounded-[999px] bg-[rgba(5,19,41,0.85)] backdrop-blur-[16px] border border-white/[0.12] px-4 sm:px-6 py-2.5 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-6 shadow-[0_10px_35px_rgba(2,8,23,0.45)]">
         {/* Left: Brand Wordmark */}
         <Link
           href="/"
