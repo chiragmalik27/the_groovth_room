@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useReducedMotion,
-  AnimatePresence,
-} from "framer-motion";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { AnimatePresence, motion } from "framer-motion";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
 
 interface TabItem {
   id: string;
@@ -97,211 +98,267 @@ export default function HeroShowcase() {
   const [activeTabId, setActiveTabId] = useState<string>("room");
   const activeTab = TABS.find((t) => t.id === activeTabId) || TABS[0];
 
-  const [isMobile, setIsMobile] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
+  // DOM Refs for GSAP animation
+  const runwayRef = useRef<HTMLDivElement>(null);
+  const heroContentRef = useRef<HTMLDivElement>(null);
+  const windowFrameRef = useRef<HTMLDivElement>(null);
+  const windowImageRef = useRef<HTMLDivElement>(null);
+  const roomContentRef = useRef<HTMLDivElement>(null);
+  const tabsRailRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  // GSAP ScrollTrigger "Window / Portal" Zoom Animation
+  useGSAP(
+    () => {
+      if (!runwayRef.current || !windowFrameRef.current) return;
 
-  // Panel ref for real-time scroll tracking
-  const panelRef = useRef<HTMLDivElement>(null);
+      const isMobile = window.innerWidth < 768;
 
-  // Scroll tracking across the entire transition zone
-  const { scrollYProgress } = useScroll({
-    target: panelRef,
-    offset: ["start 96%", "start 18%"],
-  });
+      // Master Timeline scrubbed to user scroll
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: runwayRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.2, // Silky smooth GSAP scrub
+        },
+      });
 
-  // Hermite smoothstep curve for natural, buttery settle
-  const p = useTransform(scrollYProgress, (val) => {
-    const t = Math.min(Math.max(val, 0), 1);
-    return t * t * (3 - 2 * t);
-  });
+      // 1. Hero text floats up and gently dissolves
+      tl.to(
+        heroContentRef.current,
+        {
+          opacity: 0,
+          y: -70,
+          scale: 0.95,
+          duration: 0.32,
+          ease: "power2.inOut",
+        },
+        0
+      );
 
-  // Gentle parallax fade & upward drift on hero content as user scrolls towards showcase
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0.3]);
-  const heroY = useTransform(scrollYProgress, [0, 0.45], [0, -32]);
+      // 2. The Window expands from an inset framed card into 100% full screen
+      tl.fromTo(
+        windowFrameRef.current,
+        {
+          width: isMobile ? "92vw" : "84vw",
+          maxWidth: isMobile ? "92vw" : "1152px",
+          height: isMobile ? "46vh" : "54vh",
+          borderRadius: isMobile ? "22px" : "32px",
+          borderWidth: isMobile ? "3px" : "5px",
+          borderColor: "rgba(255, 255, 255, 0.45)",
+          y: isMobile ? 18 : 28,
+          scale: 1,
+        },
+        {
+          width: "100vw",
+          maxWidth: "100vw",
+          height: "100vh",
+          borderRadius: "0px",
+          borderWidth: "0px",
+          borderColor: "rgba(255, 255, 255, 0)",
+          y: 0,
+          scale: 1,
+          duration: 0.72,
+          ease: "power2.inOut",
+        },
+        0.08
+      );
 
-  // Distinct, cool 3D perspective transforms synchronized with scroll
-  const rotateX = useTransform(p, [0, 1], [isMobile ? 12 : 24, 0]);
-  const scale = useTransform(p, [0, 1], [isMobile ? 0.93 : 0.89, 1.0]);
-  const y = useTransform(p, [0, 1], [isMobile ? 24 : 54, 0]);
-  const shadowOpacity = useTransform(p, [0, 1], [0, 1]);
-  const sheenOpacity = useTransform(p, [0, 1], [0.4, 0]);
+      // 3. Counter-scale the image inside to create authentic 3D optical depth
+      tl.fromTo(
+        windowImageRef.current,
+        {
+          scale: 1.18,
+          y: "-3%",
+        },
+        {
+          scale: 1.0,
+          y: "0%",
+          duration: 0.72,
+          ease: "power1.out",
+        },
+        0.08
+      );
 
-  const dynamicBoxShadow = useTransform(
-    shadowOpacity,
-    [0, 1],
-    [
-      "0 12px 30px -10px rgba(4, 17, 13, 0.2)",
-      "0 32px 75px -15px rgba(4, 17, 13, 0.45)",
-    ]
+      // 4. Reveal the full room details & tabs as you pass through the glass
+      tl.fromTo(
+        roomContentRef.current,
+        {
+          opacity: 0.2,
+          y: 35,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.35,
+          ease: "power2.out",
+        },
+        0.5
+      );
+
+      tl.fromTo(
+        tabsRailRef.current,
+        {
+          opacity: 0,
+          x: isMobile ? 0 : 45,
+          y: isMobile ? 30 : 0,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          duration: 0.35,
+          ease: "power2.out",
+        },
+        0.55
+      );
+    },
+    { scope: runwayRef }
   );
 
   return (
     <div
-      className="relative w-full"
+      ref={runwayRef}
+      className="relative w-full h-[260vh] sm:h-[280vh]"
       style={{
-        overflowX: "clip",
         background: `
           linear-gradient(180deg, 
-            #04110d 0%, 
-            #0f3a2c 25%, 
-            #1f6b52 48%, 
-            #3f9179 68%, 
-            #c9ddd0 88%, 
+            #020817 0%, 
+            #06163a 20%, 
+            #0b2b6b 42%, 
+            #1d4ed8 65%, 
+            #60a5fa 82%, 
+            #bfdbfe 92%, 
             #f4f1ea 100%
           )
         `,
       }}
     >
-      {/* 2. HERO CONTENT (Scrolls normally, with subtle smooth parallax fade as showcase enters) */}
-      <section className="relative min-h-[82vh] sm:min-h-[88vh] flex flex-col items-center justify-center pt-32 pb-14 sm:pt-40 sm:pb-20 text-[#f4f1ea] px-5 sm:px-8 text-center">
-        <motion.div
-          className="flex flex-col items-center justify-center w-full"
-          style={{
-            opacity: shouldReduceMotion ? 1 : heroOpacity,
-            y: shouldReduceMotion ? 0 : heroY,
-          }}
+      {/* Sticky viewport pins the camera scene */}
+      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between pt-24 pb-6 sm:py-10 px-4 sm:px-6 overflow-hidden">
+        
+        {/* 1. HERO CONTENT: Floats up and fades out as you zoom into the window */}
+        <div
+          ref={heroContentRef}
+          className="relative z-20 flex flex-col items-center text-center max-w-4xl px-4 mt-2 sm:mt-6 select-none"
         >
           {/* Eyebrow / Announcement Pill */}
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[rgba(12,42,33,0.7)] border border-white/[0.12] backdrop-blur-md mb-8 sm:mb-10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#071c42]/85 border border-blue-400/25 backdrop-blur-md mb-4 sm:mb-6 shadow-[0_4px_20px_rgba(2,8,23,0.35)]">
             <span className="font-sans text-xs sm:text-[13px] font-medium tracking-wide text-[#f4f1ea]">
               Your Partner in Building and Growing Businesses
             </span>
           </div>
 
           {/* Large Serif Headline */}
-          <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-[80px] xl:text-[88px] leading-[1.08] sm:leading-[1.04] tracking-tightest text-[#f4f1ea] max-w-4xl mx-auto mb-6 sm:mb-8 font-normal drop-shadow-sm">
+          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.08] sm:leading-[1.04] tracking-tightest text-[#f4f1ea] font-normal drop-shadow-md mb-4 sm:mb-5">
             Build Stronger Foundations. <br className="hidden sm:inline" />
-            <span className="italic font-light text-[#f4f1ea]">Create Room</span>{" "}
+            <span className="italic font-light text-blue-200">Create Room</span>{" "}
             to Grow.
           </h1>
 
           {/* Supporting Paragraph */}
-          <p className="font-sans text-base sm:text-lg md:text-xl text-[#f4f1ea]/85 max-w-2xl mx-auto leading-relaxed font-normal mb-10 sm:mb-12 text-balance">
+          <p className="font-sans text-xs sm:text-base md:text-lg text-[#f4f1ea]/85 max-w-2xl mx-auto leading-relaxed font-normal mb-5 sm:mb-6 line-clamp-2 sm:line-clamp-none text-balance">
             The Grovvth Room brings business strategy, marketing, market
             enablement and digital capabilities together to help businesses build,
             navigate and grow with clarity.
           </p>
 
           {/* Two CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full sm:w-auto">
+          <div className="flex flex-row items-center justify-center gap-3 sm:gap-5 w-auto">
             {/* Primary CTA: Cream "Explore Our Services" Button */}
             <Link
               href="/services"
-              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#f4f1ea] text-[#04110d] px-7 py-3.5 sm:px-8 sm:py-4 rounded-full text-sm font-semibold tracking-wide hover:bg-white hover:shadow-[0_8px_30px_rgba(244,241,234,0.3)] transition-all duration-200"
+              className="group inline-flex items-center justify-center gap-2 bg-[#f4f1ea] text-[#020817] px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide hover:bg-white hover:shadow-[0_8px_30px_rgba(244,241,234,0.3)] transition-all duration-200"
             >
               <span>Explore Our Services</span>
               <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
 
-            {/* Secondary CTA: Dark Green "Let's Discuss Your Business" Button */}
+            {/* Secondary CTA: Royal Blue "Let's Discuss Your Business" Button */}
             <Link
               href="/contact"
-              className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#0f3a2c]/80 hover:bg-[#0f3a2c] border border-white/20 text-[#f4f1ea] px-7 py-3.5 sm:px-8 sm:py-4 rounded-full text-sm font-medium tracking-wide backdrop-blur-sm transition-all duration-200"
+              className="group inline-flex items-center justify-center gap-2 bg-[#1d4ed8]/70 hover:bg-[#1d4ed8] border border-blue-400/30 text-[#f4f1ea] px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full text-xs sm:text-sm font-medium tracking-wide backdrop-blur-sm transition-all duration-200"
             >
-              <span>Let&apos;s Discuss Your Business</span>
+              <span>Let&apos;s Discuss</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
           </div>
-        </motion.div>
-      </section>
+        </div>
 
-      {/* 3 & 4. SHOWCASE PANEL WITH SYNCHRONIZED SCROLL-DRIVEN 3D TRANSITION */}
-      <section
-        ref={panelRef}
-        className="relative pt-6 sm:pt-12 pb-24 sm:pb-36 px-4 sm:px-6 md:px-8 flex justify-center"
-        style={{
-          perspective: "1000px",
-        }}
-      >
-        <motion.div
-          className="relative w-full max-w-6xl rounded-3xl overflow-hidden bg-[#04110d] border-4 sm:border-[6px] border-white/35 sm:border-white/45 shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
+        {/* 2. THE WINDOW FRAME: Scales up from inset card to 100% full-screen */}
+        <div
+          ref={windowFrameRef}
+          className="relative overflow-hidden bg-[#030b1e] shadow-[0_30px_90px_rgba(2,8,23,0.85)] z-10 flex flex-col justify-end"
           style={{
-            transformOrigin: "center top",
-            transformStyle: "preserve-3d",
-            willChange: "transform",
-            rotateX: shouldReduceMotion ? 0 : rotateX,
-            scale: shouldReduceMotion ? 1 : scale,
-            y: shouldReduceMotion ? 0 : y,
-            boxShadow: shouldReduceMotion
-              ? "0 25px 60px -15px rgba(4, 17, 13, 0.35)"
-              : dynamicBoxShadow,
+            willChange: "width, height, transform, border-radius",
+            transformOrigin: "center center",
           }}
         >
-          {/* Dynamic 3D lighting sheen when tilted */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none z-20"
-            style={{
-              opacity: shouldReduceMotion ? 0 : sheenOpacity,
-              background:
-                "linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.03) 35%, transparent 70%)",
-            }}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-12 min-h-[520px] lg:min-h-[580px]">
-            {/* Left ~75%: Dark photographic background with crossfade content */}
-            <div className="md:col-span-9 relative flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-hidden min-h-[440px] md:min-h-full">
-              {/* Background Photographic Image with Dark Green Overlay */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: "easeInOut" }}
-                  className="absolute inset-0 z-0"
-                >
-                  <Image
-                    src={activeTab.image}
-                    alt={activeTab.headline}
-                    fill
-                    priority
-                    className="object-cover object-center scale-[1.02]"
-                  />
-                  {/* Darkened with green overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#04110d] via-[#04110d]/75 to-[#04110d]/45" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#04110d]/85 via-[#04110d]/40 to-transparent" />
-                </motion.div>
-              </AnimatePresence>
+          {/* View through the window: Photographic Image with Royal Blue Lighting Overlay */}
+          <div ref={windowImageRef} className="absolute inset-0 z-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={activeTab.image}
+                  alt={activeTab.headline}
+                  fill
+                  priority
+                  className="object-cover object-center scale-[1.02]"
+                />
+                {/* Royal Blue Multi-layer Atmosphere Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#051329]/75 to-[#08204d]/40" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#020817]/85 via-[#051329]/45 to-transparent" />
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
+          {/* Window Glass Highlight Sheen */}
+          <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-b from-white/[0.08] via-transparent to-transparent" />
+
+          {/* 3. INSIDE THE ROOM: Interactive Consultation Workspace & Tabs */}
+          <div className="relative z-20 w-full h-full grid grid-cols-1 md:grid-cols-12 min-h-full">
+            {/* Left 9 Columns: Room Active Content */}
+            <div
+              ref={roomContentRef}
+              className="md:col-span-9 flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-[300px] md:min-h-full"
+            >
               {/* Top Row: Left Mono Label & Right Pill */}
-              <div className="relative z-10 flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#f4f1ea]">
-                  <span className="w-2 h-2 rounded-full bg-[#10b981]" />
+                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                   <span>THE GROVVTH ROOM</span>
                 </div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[#b7c9b9] bg-[#0c2a21]/90 border border-white/10 px-3.5 py-1 rounded-full backdrop-blur-sm">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-blue-200 bg-[#0c2656]/90 border border-blue-400/25 px-3.5 py-1 rounded-full backdrop-blur-md">
                   {activeTab.badge}
                 </span>
               </div>
 
-              {/* Center Content: Eyebrow + Big Uppercase Serif Headline */}
-              <div className="relative z-10 my-auto py-6 sm:py-8">
+              {/* Center Content: Eyebrow + Headline */}
+              <div className="my-auto py-4 sm:py-6">
                 <div className="text-[11px] sm:text-xs font-mono uppercase tracking-widest text-[#c5a66a] mb-2 font-medium">
                   {activeTab.eyebrow}
                 </div>
-                <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#f4f1ea] uppercase leading-[1.1] max-w-2xl drop-shadow-md">
+                <h2 className="font-serif text-xl sm:text-3xl lg:text-5xl font-normal tracking-tight text-[#f4f1ea] uppercase leading-[1.1] max-w-2xl drop-shadow-md">
                   {activeTab.headline}
                 </h2>
               </div>
 
-              {/* Bottom Row: Divider, Status Dot, Description, and Sage CTA Button */}
-              <div className="relative z-10 pt-6 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-5">
-                {/* Status Dot + Description */}
-                <div className="space-y-2 max-w-lg">
+              {/* Bottom Row: Status Dot, Description, and CTA Button */}
+              <div className="pt-4 sm:pt-6 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 sm:gap-5">
+                <div className="space-y-1.5 max-w-lg">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
                     </span>
-                    <span className="text-xs font-mono font-medium text-emerald-300 tracking-wide">
+                    <span className="text-xs font-mono font-medium text-blue-300 tracking-wide">
                       {activeTab.status}
                     </span>
                   </div>
@@ -310,10 +367,9 @@ export default function HeroShowcase() {
                   </p>
                 </div>
 
-                {/* Sage "Start a Conversation" Button */}
                 <Link
                   href={activeTab.ctaHref}
-                  className="group shrink-0 inline-flex items-center gap-2 bg-[#b7c9b9] hover:bg-white text-[#04110d] font-semibold text-xs sm:text-sm px-6 py-3.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                  className="group shrink-0 inline-flex items-center gap-2 bg-[#93c5fd] hover:bg-white text-[#020817] font-semibold text-xs sm:text-sm px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                 >
                   <span>{activeTab.ctaText}</span>
                   <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -321,8 +377,11 @@ export default function HeroShowcase() {
               </div>
             </div>
 
-            {/* Right ~25%: Vertical Tab Rail with 5 Equal-Height Rows */}
-            <div className="md:col-span-3 flex flex-row md:flex-col divide-x md:divide-x-0 md:divide-y divide-white/10 bg-[#0c2a21] border-t md:border-t-0 md:border-l border-white/10 overflow-x-auto md:overflow-visible">
+            {/* Right 3 Columns: 5 Equal-Height Workstream Tabs */}
+            <div
+              ref={tabsRailRef}
+              className="md:col-span-3 flex flex-row md:flex-col divide-x md:divide-x-0 md:divide-y divide-white/10 bg-[#06183a]/95 border-t md:border-t-0 md:border-l border-white/15 overflow-x-auto md:overflow-visible backdrop-blur-md"
+            >
               {TABS.map((tab) => {
                 const isActive = tab.id === activeTabId;
                 return (
@@ -330,18 +389,18 @@ export default function HeroShowcase() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTabId(tab.id)}
-                    className={`flex-1 min-w-[130px] md:min-w-0 flex items-center justify-between px-5 sm:px-6 py-4 lg:py-5 text-left transition-all duration-200 focus:outline-none ${
+                    className={`flex-1 min-w-[120px] md:min-w-0 flex items-center justify-between px-4 sm:px-6 py-3.5 lg:py-5 text-left transition-all duration-200 focus:outline-none ${
                       isActive
-                        ? "bg-[#b7c9b9] text-[#04110d] font-semibold"
-                        : "bg-[#0c2a21] text-[#f4f1ea]/75 hover:text-[#f4f1ea] hover:bg-[#11392d]"
+                        ? "bg-[#bfdbfe] text-[#020817] font-semibold shadow-inner"
+                        : "bg-transparent text-[#f4f1ea]/75 hover:text-white hover:bg-[#0c2b64]"
                     }`}
                   >
-                    <span className="text-sm sm:text-base tracking-wide font-sans">
+                    <span className="text-xs sm:text-sm lg:text-base tracking-wide font-sans">
                       {tab.label}
                     </span>
                     <span
                       className={`w-2 h-2 rounded-full transition-colors ${
-                        isActive ? "bg-[#04110d]" : "bg-white/20"
+                        isActive ? "bg-[#020817]" : "bg-blue-300/30"
                       }`}
                     />
                   </button>
@@ -349,8 +408,9 @@ export default function HeroShowcase() {
               })}
             </div>
           </div>
-        </motion.div>
-      </section>
+        </div>
+
+      </div>
     </div>
   );
 }
